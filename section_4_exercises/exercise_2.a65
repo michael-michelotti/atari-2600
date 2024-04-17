@@ -5,7 +5,7 @@
 
 Start:
     lda #$A
-    ldx %11111111
+    ldx #%11111111
     sta $80
     stx $81
 

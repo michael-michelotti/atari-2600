@@ -10,7 +10,9 @@ Start:
     sta $80
     stx $81
 
-    lda #A
+    lda #10
+
+    clc
     adc $80
     adc $81
 

@@ -6,6 +6,7 @@
 Start:
     lda #1
 Loop:
+    clc
     adc #1
     cmp #10
     bne Loop

@@ -10,10 +10,12 @@ Start:
 
     inx
     iny
+    clc
     adc #1
 
     dex
     dey
+    sec
     sbc #1
 
 
