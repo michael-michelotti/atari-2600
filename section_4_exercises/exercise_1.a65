@@ -1,0 +1,16 @@
+    processor 6502
+
+    seg code
+    org $F000       ; Define the code origin at $F000
+
+Start:
+    lda #$82
+    ldx #82
+    ldy $82
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Fill the ROM size to exactly 4KB
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org $FFFC
+    .word Start     ; Reset vector at $FFFC (where the program starts)
+    .word Start     ; Interrupt vector at $FFFE (unused in VCS)

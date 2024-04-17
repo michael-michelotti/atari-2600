@@ -15,10 +15,11 @@ Start:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     lda #0          ; A = 0
     ldx #$FF        ; X = 0xFF
+    sta $FF         
 
 MemLoop:
-    sta $0,X        ; Store the value of A inside memoryu address $0 + X
     dex             ; X--
+    sta $0,X        ; Store the value of A inside memoryu address $0 + X
     bne MemLoop     ; Loop until X = 0 (z-flag is set)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
