@@ -1,0 +1,96 @@
+    processor 6502
+
+    include "vcs.h"
+    include "macro.h"
+
+    seg code
+    org $F000
+
+Start:
+    CLEAN_START
+
+    ldx #$80            ; blue background color
+    stx COLUBK
+
+    lda #$1C            ; yellow background color
+    sta COLUPF
+
+StartFrame:
+    lda #02
+    sta VBLANK          ; turn VBLANK on
+    sta VSYNC           ; turn VSYNC on
+
+    ; Generate 3 lines of WSYNC
+    REPEAT 3
+        sta WSYNC       ; three scanlines for VSYNC
+    REPEND
+    lda #0
+    sta VSYNC           ; turn off VSYNC
+
+    REPEAT 37
+        sta WSYNC       ; 37 scanlines for VBLANK
+    REPEND
+    lda #0
+    sta VBLANK          ; turn off VBLANK
+
+    ldx #%00000001      ; Set CTRLPF register to reflect
+    stx CTRLPF          
+
+    ldx #0
+    stx PF0             ; set playfield bytes to 0 for initial 7 scanlines
+    stx PF1
+    stx PF2
+    REPEAT 7
+        sta WSYNC
+    REPEND
+
+    ldx #%11100000      ; set PF0 to 1110 (LSB first)
+    stx PF0
+    ldx #%11111111      ; set PF1-PF2 to 1111 1111
+    stx PF1
+    stx PF2
+    REPEAT 7            ; repeat playfield pattern for 7 scanlines
+        sta WSYNC
+    REPEND
+
+    ldx #%01100000      ; set PF0 to 0010  
+    stx PF0
+    ldx #0              ; set PF1 to 0000 0000
+    stx PF1
+    ldx #%10000000      ; set PF2 to create a center border
+    stx PF2
+    REPEAT 164          ; repeat playfield pattern for 164 scanlines
+        sta WSYNC
+    REPEND
+
+    ldx #%11100000      ; set PF0 to 1110 (LSB first)
+    stx PF0
+    ldx #%11111111      ; set PF1-PF2 to 1111 1111
+    stx PF1
+    stx PF2
+    REPEAT 7            ; repeat playfield pattern for 7 scanlines
+        sta WSYNC
+    REPEND
+
+    ldx #0
+    stx PF0             ; set playfield bytes to 0 for initial 7 scanlines
+    stx PF1
+    stx PF2
+    REPEAT 7
+        sta WSYNC
+    REPEND
+
+    ; Output 30 VBLANK overscans to complete frame
+    lda #2
+    sta VBLANK
+    REPEAT 30
+        sta WSYNC
+    REPEND
+    lda #0
+    sta VBLANK
+
+    jmp StartFrame
+
+    org $FFFC
+    .word Start     ; Reset vector at $FFFC (where the program starts)
+    .word Start     ; Interrupt vector at $FFFE (unused in VCS)
