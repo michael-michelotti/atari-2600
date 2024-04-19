@@ -1,0 +1,161 @@
+    processor 6502
+
+    include "vcs.h"
+    include "macro.h"
+
+    ; Start an uninitialized segment at $80 for variable declaration
+    seg.u variables
+    org $80
+P0Height byte             ; defines 1 byte for player 0 height
+PlayerYPos byte           ; defines 1 byte for player 1 height
+
+    seg code
+    org $F000
+
+Start:
+    CLEAN_START
+
+    ldx #$00            ; black background color
+    stx COLUBK
+
+    lda #%1111          ; white background color
+    sta COLUPF
+
+    lda #$48            ; player 0 color light red
+    sta COLUP0
+
+    lda #$C6            ; player 1 color light green
+    sta COLUP1
+
+; Initialize variables
+    lda #180
+    sta PlayerYPos      ; PlayerYPos = 180
+
+    lda #9
+    sta P0Height        ; P0Height = 10
+
+    ldy #%00000010      ; CTRLPF bit 1 set to 1 means playfield = score
+    sty CTRLPF      
+
+StartFrame:
+    lda #2
+    sta VBLANK          ; turn VBLANK on
+    sta VSYNC           ; turn VSYNC on
+
+    ; Generate 3 lines of WSYNC
+    REPEAT 3
+        sta WSYNC       ; three scanlines for VSYNC
+    REPEND
+    lda #0
+    sta VSYNC           ; turn off VSYNC
+
+    REPEAT 37
+        sta WSYNC       ; 37 scanlines for VBLANK
+    REPEND
+    lda #0
+    sta VBLANK          ; turn off VBLANK        
+
+VisibleScanlines:
+    ; Draw 10 empty scanlines at the top of the frame
+    REPEAT 10
+        sta WSYNC
+    REPEND
+
+
+    ldy #0
+; Draw 10 scanlines for the scoreboard. Pulls data from array of bytes at NumberBitmap
+ScoreboardLoop:
+    lda NumberBitmap,Y
+    sta PF1
+    sta WSYNC
+    iny
+    cpy #10
+    bne ScoreboardLoop
+
+    lda #0
+    sta PF1
+
+    ; Draw 50 empty scanlines between scoreboard and players
+    REPEAT 50
+        sta WSYNC
+    REPEND
+
+; Draw 10 scanlines for Player 0. Pulls data from array of bytes at PlayerBitmap.
+    ldy #0
+Player0Loop:
+    lda PlayerBitmap,Y
+    sta GRP0
+    sta WSYNC
+    iny
+    cpy P0Height
+    bne Player0Loop
+
+    lda #0
+    sta GRP0
+
+; Draw 10 scanlines for Player 1. Pulls data from array of bytes at PlayerBitmap.
+    ldy #0
+Player1Loop:
+    lda PlayerBitmap,Y
+    sta GRP1
+    sta WSYNC
+    iny
+    cpy P1Height
+    bne Player1Loop
+
+    lda #0
+    sta GRP1
+
+    ; Draw the remaining empty 102 scanlines (192-10-10-50-10-10)
+    REPEAT 102
+        sta WSYNC
+    REPEND
+
+    ; Output 30 VBLANK overscans to complete frame
+    lda #2
+    sta VBLANK
+    REPEAT 30
+        sta WSYNC
+    REPEND
+    lda #0
+    sta VBLANK
+
+    jmp StartFrame
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Defines an array of bytes to draw the scoreboard number.
+;; We add these bytes in the last ROM addresses.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org $FFE8
+PlayerBitmap:
+    .byte #%01111110   ;  ######
+    .byte #%11111111   ; ########
+    .byte #%10011001   ; #  ##  #
+    .byte #%11111111   ; ########
+    .byte #%11111111   ; ########
+    .byte #%11111111   ; ########
+    .byte #%10111101   ; # #### #
+    .byte #%11000011   ; ##    ##
+    .byte #%11111111   ; ########
+    .byte #%01111110   ;  ######
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Defines an array of bytes to draw the scoreboard number.
+;; We add these bytes in the final ROM addresses.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org $FFF2
+NumberBitmap:
+    .byte #%00001110   ; ########
+    .byte #%00001110   ; ########
+    .byte #%00000010   ;      ###
+    .byte #%00000010   ;      ###
+    .byte #%00001110   ; ########
+    .byte #%00001110   ; ########
+    .byte #%00001000   ; ###
+    .byte #%00001000   ; ###
+    .byte #%00001110   ; ########
+    .byte #%00001110   ; ########
+
+    org $FFFC
+    .word Start     ; Reset vector at $FFFC (where the program starts)
+    .word Start     ; Interrupt vector at $FFFE (unused in VCS)
